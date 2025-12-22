@@ -166,7 +166,9 @@ class UploadAzureComputegalleryCommand(UploadBaseCommand):
                     self.computegallery_image,
                 )
 
-                computegallery_image_arch = AzureVmArch(computegallery_image.properties()['architecture'])
+                arch = computegallery_image.properties()['architecture']
+                assert isinstance(arch, str)
+                computegallery_image_arch = AzureVmArch(arch.lower())
                 computegallery_image_generation = AzureVmGeneration(computegallery_image.properties()['hyperVGeneration'])
 
                 if computegallery_image_arch != image_arch:
