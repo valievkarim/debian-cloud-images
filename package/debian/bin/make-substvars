@@ -18,6 +18,7 @@ class_exclude = {
 class_arch = {
     'AMD64': {'amd64'},
     'ARM64': {'arm64'},
+    'ARMHF': {'armhf'},
     'AZURE': {'amd64', 'arm64'},
     'EC2': {'amd64', 'arm64'},
     'GCE': {'amd64', 'arm64'},

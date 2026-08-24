@@ -520,6 +520,19 @@
       "CLOUD_VENDOR": "generic"
     }
   },
+  "generic bookworm armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
+      "CLOUD_RELEASE": "bookworm",
+      "CLOUD_VENDOR": "generic"
+    }
+  },
   "generic bookworm ppc64el build": {
     "extends": ".build",
     "rules": [
@@ -555,6 +568,19 @@
     ],
     "variables": {
       "CLOUD_ARCH": "arm64",
+      "CLOUD_RELEASE": "bookworm-backports",
+      "CLOUD_VENDOR": "generic"
+    }
+  },
+  "generic bookworm-backports armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
       "CLOUD_RELEASE": "bookworm-backports",
       "CLOUD_VENDOR": "generic"
     }
@@ -650,6 +676,19 @@
       "CLOUD_VENDOR": "generic"
     }
   },
+  "generic forky armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
+      "CLOUD_RELEASE": "forky",
+      "CLOUD_VENDOR": "generic"
+    }
+  },
   "generic forky ppc64el build": {
     "extends": ".build",
     "rules": [
@@ -711,6 +750,19 @@
     ],
     "variables": {
       "CLOUD_ARCH": "arm64",
+      "CLOUD_RELEASE": "sid",
+      "CLOUD_VENDOR": "generic"
+    }
+  },
+  "generic sid armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
       "CLOUD_RELEASE": "sid",
       "CLOUD_VENDOR": "generic"
     }
@@ -780,6 +832,19 @@
       "CLOUD_VENDOR": "generic"
     }
   },
+  "generic trixie armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
+      "CLOUD_RELEASE": "trixie",
+      "CLOUD_VENDOR": "generic"
+    }
+  },
   "generic trixie ppc64el build": {
     "extends": ".build",
     "rules": [
@@ -828,6 +893,19 @@
     ],
     "variables": {
       "CLOUD_ARCH": "arm64",
+      "CLOUD_RELEASE": "trixie-backports",
+      "CLOUD_VENDOR": "generic"
+    }
+  },
+  "generic trixie-backports armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
       "CLOUD_RELEASE": "trixie-backports",
       "CLOUD_VENDOR": "generic"
     }
@@ -1079,6 +1157,19 @@
       "CLOUD_VENDOR": "nocloud"
     }
   },
+  "nocloud bookworm armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
+      "CLOUD_RELEASE": "bookworm",
+      "CLOUD_VENDOR": "nocloud"
+    }
+  },
   "nocloud bookworm ppc64el build": {
     "extends": ".build",
     "rules": [
@@ -1114,6 +1205,19 @@
     ],
     "variables": {
       "CLOUD_ARCH": "arm64",
+      "CLOUD_RELEASE": "bookworm-backports",
+      "CLOUD_VENDOR": "nocloud"
+    }
+  },
+  "nocloud bookworm-backports armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
       "CLOUD_RELEASE": "bookworm-backports",
       "CLOUD_VENDOR": "nocloud"
     }
@@ -1209,6 +1313,19 @@
       "CLOUD_VENDOR": "nocloud"
     }
   },
+  "nocloud forky armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
+      "CLOUD_RELEASE": "forky",
+      "CLOUD_VENDOR": "nocloud"
+    }
+  },
   "nocloud forky ppc64el build": {
     "extends": ".build",
     "rules": [
@@ -1270,6 +1387,19 @@
     ],
     "variables": {
       "CLOUD_ARCH": "arm64",
+      "CLOUD_RELEASE": "sid",
+      "CLOUD_VENDOR": "nocloud"
+    }
+  },
+  "nocloud sid armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
       "CLOUD_RELEASE": "sid",
       "CLOUD_VENDOR": "nocloud"
     }
@@ -1339,6 +1469,19 @@
       "CLOUD_VENDOR": "nocloud"
     }
   },
+  "nocloud trixie armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
+      "CLOUD_RELEASE": "trixie",
+      "CLOUD_VENDOR": "nocloud"
+    }
+  },
   "nocloud trixie ppc64el build": {
     "extends": ".build",
     "rules": [
@@ -1387,6 +1530,19 @@
     ],
     "variables": {
       "CLOUD_ARCH": "arm64",
+      "CLOUD_RELEASE": "trixie-backports",
+      "CLOUD_VENDOR": "nocloud"
+    }
+  },
+  "nocloud trixie-backports armhf build": {
+    "extends": ".build",
+    "rules": [
+      {
+        "when": "manual"
+      }
+    ],
+    "variables": {
+      "CLOUD_ARCH": "armhf",
       "CLOUD_RELEASE": "trixie-backports",
       "CLOUD_VENDOR": "nocloud"
     }
