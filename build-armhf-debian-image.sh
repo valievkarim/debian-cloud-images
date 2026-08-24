@@ -24,10 +24,19 @@ apt-get install --no-install-recommends -y \
   qemu-user-static qemu-utils sudo udev
 
 # armhf is a foreign architecture here, so debootstrap and the FAI chroot rely
-# on transparent qemu-user emulation
+# on transparent qemu-user emulation.  Check the kernel state directly rather
+# than update-binfmts' own database: on a runner where the handler is already
+# registered (out-of-band, or by an earlier job) 'update-binfmts --display'
+# fails even though emulation works fine.
 mountpoint -q /proc/sys/fs/binfmt_misc || mount -t binfmt_misc none /proc/sys/fs/binfmt_misc
-update-binfmts --enable qemu-arm
-update-binfmts --display qemu-arm
+if [ ! -e /proc/sys/fs/binfmt_misc/qemu-arm ]; then
+  update-binfmts --enable qemu-arm
+fi
+cat /proc/sys/fs/binfmt_misc/qemu-arm
+grep -qx enabled /proc/sys/fs/binfmt_misc/qemu-arm
+# The F (fix-binary) flag opens the interpreter at registration time, which is
+# what makes it reachable from inside the FAI chroot.
+grep -qE '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-arm
 
 make "image_${RELEASE}_generic_armhf"
 
