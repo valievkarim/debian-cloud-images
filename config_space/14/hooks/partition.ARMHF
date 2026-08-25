@@ -1,0 +1,37 @@
+#!/bin/sh
+set -eu
+touch $LOGDIR/skip.partition
+
+set -- $disklist
+device=/dev/$1
+device_efi="${device}p1"
+device_root="${device}p2"
+
+wait_for_device() {
+  for s in $(seq 10); do
+    if [ -e "$1" ]; then
+      break
+    fi
+    sleep 1
+  done
+}
+
+# MBR, not GPT: sunxi boot ROMs load U-Boot SPL from raw sector 16 (8 KiB),
+# which on a GPT disk lands inside the partition entry array.  Leaving the
+# first 1 MiB free keeps room for u-boot-sunxi-with-spl.bin (~600 KiB).
+sfdisk "$device" << SFDISK_EOF
+label: dos
+unit: sectors
+
+p1 : start=2048, size=253952, type=ef
+p2 : start=256000, type=83
+SFDISK_EOF
+
+partprobe "$device"
+
+wait_for_device "$device_root"
+mkfs.ext4 -O none,sparse_super,large_file,filetype,resize_inode,dir_index,ext_attr,has_journal,extent,huge_file,flex_bg,metadata_csum,64bit,dir_nlink,extra_isize -U "$FSUUID_ROOT" "$device_root"
+tune2fs -c 0 -i 0 "$device_root"
+
+wait_for_device "$device_efi"
+mkfs.vfat -n ESP "$device_efi"

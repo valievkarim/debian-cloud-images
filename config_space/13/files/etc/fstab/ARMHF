@@ -1,0 +1,2 @@
+UUID={%FSUUID_ROOT%} / ext4 rw,discard,errors=remount-ro,x-systemd.growfs 0 1
+LABEL=ESP /boot/efi vfat defaults,umask=077 0 2

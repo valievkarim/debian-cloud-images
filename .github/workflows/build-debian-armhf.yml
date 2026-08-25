@@ -1,0 +1,117 @@
+name: Build and release Debian armhf cloud images
+
+on:
+  schedule:
+    - cron: '53 6 * * *'  # Run daily
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write  # Required for creating releases
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - release: bookworm
+            version: 12
+          - release: trixie
+            version: 13
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie
+      options: >-
+        --privileged
+        -v /dev:/dev
+        -v /proc:/proc
+        -v /sys:/sys
+        -v /run:/run
+
+    steps:
+    - name: Install git
+      run: |
+        apt-get update
+        apt-get install -y git
+
+    - uses: actions/checkout@v4
+
+    - name: Set up environment
+      run: |
+        apt-get update
+        apt-get install --no-install-recommends -y \
+          apt-utils \
+          binfmt-support \
+          ca-certificates \
+          debsums \
+          dosfstools \
+          fai-server \
+          fai-setup-storage \
+          fdisk \
+          make \
+          python3 \
+          python3-httpx \
+          python3-libcloud \
+          python3-marshmallow \
+          python3-pytest \
+          python3-yaml \
+          qemu-user-static \
+          qemu-utils \
+          udev \
+          sudo
+
+    - name: Enable armhf emulation
+      run: |
+        # armhf is a foreign architecture here, so debootstrap and the FAI chroot rely
+        # on transparent qemu-user emulation.  Check the kernel state directly rather
+        # than update-binfmts' own database: on a runner where the handler is already
+        # registered (out-of-band, or by an earlier job) 'update-binfmts --display'
+        # fails even though emulation works fine.
+        mountpoint -q /proc/sys/fs/binfmt_misc || mount -t binfmt_misc none /proc/sys/fs/binfmt_misc
+        if [ ! -e /proc/sys/fs/binfmt_misc/qemu-arm ]; then
+          update-binfmts --enable qemu-arm
+        fi
+        cat /proc/sys/fs/binfmt_misc/qemu-arm
+        grep -qx enabled /proc/sys/fs/binfmt_misc/qemu-arm
+        # The F (fix-binary) flag opens the interpreter at registration time, which is
+        # what makes it reachable from inside the FAI chroot.
+        grep -qE '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-arm
+
+    - name: Build image
+      run: |
+        make image_${{ matrix.release }}_generic_armhf
+        qemu-img convert -p -c -f raw -O qcow2 \
+          image_${{ matrix.release }}_generic_armhf.raw \
+          debian-${{ matrix.version }}-generic-armhf.qcow2
+        chown $(id -u):$(id -g) debian-${{ matrix.version }}-generic-armhf.qcow2
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: debian-${{ matrix.version }}-generic-armhf
+        path: debian-${{ matrix.version }}-generic-armhf.qcow2
+        retention-days: 1
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+        merge-multiple: true
+
+    - name: Get current date
+      id: date
+      run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: latest
+        commit: ${{ github.sha }}
+        name: daily build ${{ steps.date.outputs.date }}
+        artifacts: artifacts/*.qcow2
+        allowUpdates: true
+        removeArtifacts: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+        makeLatest: true

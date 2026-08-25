@@ -1,0 +1,14 @@
+# MODULES=most does not pull in any drivers/block/ modules on armhf, so the
+# root device is invisible to the initramfs unless they are listed explicitly.
+# virtio_* covers the QEMU 'virt' machine this image is built and rehearsed on;
+# the rest cover the sunxi boards it targets (SD/eMMC and the SATA port).
+virtio_mmio
+virtio_blk
+virtio_net
+sunxi-mmc
+mmc_block
+ahci_platform
+ahci_sunxi
+ext4
+usb_storage
+sd_mod

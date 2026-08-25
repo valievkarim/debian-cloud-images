@@ -4,6 +4,12 @@ set -euE
 # Workaround: allow grub-install to succeed on tmpfs
 mkfs.ext4 -U "$FSUUID_ROOT" "$FAI_ROOT"/run/target 1024
 
+# ARMHF uses an MBR disk label; everything else is GPT
+grub_partmap_module=part_gpt
+if ifclass ARMHF; then
+  grub_partmap_module=part_msdos
+fi
+
 grub_install() {
   target=$1
   shift
@@ -16,7 +22,7 @@ grub_install() {
     --force \
     --force-extra-removable \
     --skip-fs-probe \
-    --modules="ext2 part_gpt" \
+    --modules="ext2 $grub_partmap_module" \
     -v \
     "$@"
 }
@@ -30,6 +36,9 @@ elif ifclass ARM64; then
   echo "grub-efi-arm64  grub2/force_efi_extra_removable boolean true" | $ROOTCMD debconf-set-selections
   mkdir -p "$FAI_ROOT"/boot/efi
   grub_install arm64-efi
+elif ifclass ARMHF; then
+  mkdir -p "$FAI_ROOT"/boot/efi
+  grub_install arm-efi
 elif ifclass PPC64EL; then
   grub_install powerpc-ieee1275
 elif ifclass RISCV64; then
@@ -59,9 +68,14 @@ fi
 # path for `grub-probe`.  `grub-mkconfig` won't emit root with UUID/PARTUUID,
 # if it can't find them in `/dev/disks`, so use a static string and replace it
 # here.
+grub_root_spec="PARTUUID=${PARTUUID_ROOT}"
+if ifclass ARMHF; then
+  grub_root_spec="UUID=${FSUUID_ROOT}"
+fi
+
 pkgdatadir=/run/grub $ROOTCMD grub-mkconfig | \
   sed \
-    -e "s|##DEV##|PARTUUID=${PARTUUID_ROOT}|" \
+    -e "s|##DEV##|${grub_root_spec}|" \
     -e "s|##FSUUID##|${FSUUID_ROOT}|" \
     -e "s|##PARTUUID##|${PARTUUID_ROOT}|" \
   > "$FAI_ROOT"/boot/grub/grub.cfg

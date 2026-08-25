@@ -13,6 +13,9 @@ archs:
   azureName: Arm64
   ociArch: arm64
   faiClasses: [ARM64]
+- name: armhf
+  ociArch: arm
+  faiClasses: [ARMHF]
 - name: ppc64el
   faiClasses: [PPC64EL]
   ociArch: ppc64le
@@ -44,28 +47,28 @@ releases:
   baseid: '12'
   faiClasses: [BOOKWORM, LINUX_VERSION_BASE, EXTRAS]
   matches:
-  - matchArches: [amd64, arm64, ppc64el]
+  - matchArches: [amd64, arm64, armhf, ppc64el]
 - name: bookworm-backports
   basename: bookworm-backports
   id: 12-backports
   baseid: '12'
   faiClasses: [BOOKWORM, LINUX_VERSION_BACKPORTS, EXTRAS]
   matches:
-  - matchArches: [amd64, arm64, ppc64el]
+  - matchArches: [amd64, arm64, armhf, ppc64el]
 - name: trixie
   basename: trixie
   id: '13'
   baseid: '13'
   faiClasses: [TRIXIE, LINUX_VERSION_BASE, EXTRAS]
   matches:
-  - matchArches: [amd64, arm64, ppc64el, riscv64]
+  - matchArches: [amd64, arm64, armhf, ppc64el, riscv64]
 - name: trixie-backports
   basename: trixie-backports
   id: 13-backports
   baseid: '13'
   faiClasses: [TRIXIE, LINUX_VERSION_BACKPORTS, EXTRAS]
   matches:
-  - matchArches: [amd64, arm64, ppc64el]
+  - matchArches: [amd64, arm64, armhf, ppc64el]
 - name: forky
   basename: forky
   id: '14'

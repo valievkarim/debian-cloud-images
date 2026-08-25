@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euE
+
+# fcopy installs /etc/initramfs-tools/modules during task_configure, which is
+# after the kernel package already generated the initramfs, so rebuild it.
+if ifclass ARMHF; then
+  $ROOTCMD update-initramfs -u
+fi
