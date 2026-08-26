@@ -38,7 +38,10 @@ grep -qx enabled /proc/sys/fs/binfmt_misc/qemu-arm
 # what makes it reachable from inside the FAI chroot.
 grep -qE '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-arm
 
-make "image_${RELEASE}_generic_armhf"
+# official rather than the default dev type: dev adds TYPE_DEV, which enables
+# passwordless root autologin on tty1 and the serial console.  Convenient for
+# a throwaway VM, wrong for a board whose serial header is reachable.
+make BUILD_TYPE="${BUILD_TYPE:-official}" "image_${RELEASE}_generic_armhf"
 
 qemu-img convert -p -c -f raw -O qcow2 \
   "image_${RELEASE}_generic_armhf.raw" \

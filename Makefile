@@ -1,6 +1,9 @@
 # path to the config space shoud be absolute, see fai.conf(5)
 
 DESTDIR = .
+# dev adds TYPE_DEV: root autologin on tty1 and serial, GRUB_TIMEOUT=5.
+# Override with BUILD_TYPE=official for an image matching the published ones.
+BUILD_TYPE = dev
 
 help:
 	@echo "To run this makefile, run:"
@@ -15,6 +18,7 @@ image_%:
 	./bin/debian-cloud-images build \
 	  $(subst _, ,$*) \
 	  --build-id manual \
+	  --build-type $(BUILD_TYPE) \
 	  --version $(shell date '+%Y%m%d%H%M') \
 	  --localdebs \
 	  --output $(DESTDIR) \
