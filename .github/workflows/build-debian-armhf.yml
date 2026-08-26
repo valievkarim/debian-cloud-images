@@ -79,7 +79,7 @@ jobs:
 
     - name: Build image
       run: |
-        make image_${{ matrix.release }}_generic_armhf
+        make BUILD_TYPE=official image_${{ matrix.release }}_generic_armhf
         qemu-img convert -p -c -f raw -O qcow2 \
           image_${{ matrix.release }}_generic_armhf.raw \
           debian-${{ matrix.version }}-generic-armhf.qcow2
