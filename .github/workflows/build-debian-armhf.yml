@@ -1,8 +1,6 @@
 name: Build and release Debian armhf cloud images
 
 on:
-  schedule:
-    - cron: '53 6 * * *'  # Run daily
   workflow_dispatch:  # Allow manual triggering
 
 permissions:
