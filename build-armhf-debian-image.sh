@@ -4,6 +4,12 @@
 #   ./build-armhf-debian-image.sh [RELEASE]
 #
 # RELEASE defaults to bookworm; trixie, forky and sid also work.
+#
+# Tested in Docker (needs privileged for loop devices, binfmt_misc and mounts,
+# plus the host /dev so udev-created partition nodes are visible):
+#
+#   docker run --rm --privileged -v /dev:/dev \
+#     -v "$PWD:/work" -w /work debian:trixie ./build-armhf-debian-image.sh bookworm
 
 set -o nounset
 set -o errexit -o pipefail
@@ -30,7 +36,26 @@ apt-get install --no-install-recommends -y \
 # fails even though emulation works fine.
 mountpoint -q /proc/sys/fs/binfmt_misc || mount -t binfmt_misc none /proc/sys/fs/binfmt_misc
 if [ ! -e /proc/sys/fs/binfmt_misc/qemu-arm ]; then
-  update-binfmts --enable qemu-arm
+  # On trixie qemu-user ships systemd binfmt.d fragments instead of
+  # update-binfmts definitions, and the systemd-binfmt helper may be missing
+  # from a minimal container, so 'update-binfmts --enable qemu-arm' fails with
+  # "not in database of installed binary formats".  Try each registration
+  # method in turn, falling back to writing the kernel register interface
+  # directly with the static interpreter.
+  if [ -e /usr/share/binfmts/qemu-arm ] && update-binfmts --enable qemu-arm; then
+    true
+  elif [ -x /lib/systemd/systemd-binfmt ] && /lib/systemd/systemd-binfmt; then
+    true
+  elif [ -x /usr/lib/systemd/systemd-binfmt ] && /usr/lib/systemd/systemd-binfmt; then
+    true
+  elif command -v systemd-binfmt >/dev/null 2>&1 && systemd-binfmt; then
+    true
+  else
+    # C opens the interpreter on behalf of the chroot credentials, F
+    # (fix-binary) opens it at registration time so it stays reachable
+    # inside the FAI chroot.
+    printf '%s' ':qemu-arm:M::\x7f\x45\x4c\x46\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/usr/bin/qemu-arm-static:CF' > /proc/sys/fs/binfmt_misc/register
+  fi
 fi
 cat /proc/sys/fs/binfmt_misc/qemu-arm
 grep -qx enabled /proc/sys/fs/binfmt_misc/qemu-arm

@@ -1,22 +1,51 @@
 name: Build and release Debian armhf cloud images
 
 on:
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch:  # Manual triggering only
+    inputs:
+      releases:
+        description: 'Debian releases to build'
+        required: false
+        default: both
+        type: choice
+        options:
+          - both
+          - bookworm
+          - trixie
 
 permissions:
   contents: write  # Required for creating releases
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        run: |
+          case "${{ inputs.releases }}" in
+            bookworm)
+              echo 'matrix={"include":[{"release":"bookworm","version":12}]}' >> "$GITHUB_OUTPUT"
+              ;;
+            trixie)
+              echo 'matrix={"include":[{"release":"trixie","version":13}]}' >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo 'matrix={"include":[{"release":"bookworm","version":12},{"release":"trixie","version":13}]}' >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
   build:
+    needs: setup
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - release: bookworm
-            version: 12
-          - release: trixie
-            version: 13
-    runs-on: ubuntu-latest
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
+    # Native ARM workers: armhf builds still go through the same
+    # build-armhf-debian-image.sh (qemu-arm binfmt path), but running on
+    # arm64 avoids full x86_64->ARM emulation. ubuntu-24.04-arm is the
+    # version-pinned hosted label; there is no ubuntu-latest-arm alias.
+    runs-on: ubuntu-24.04-arm
     container:
       image: debian:trixie
       options: >-
@@ -34,53 +63,11 @@ jobs:
 
     - uses: actions/checkout@v4
 
-    - name: Set up environment
-      run: |
-        apt-get update
-        apt-get install --no-install-recommends -y \
-          apt-utils \
-          binfmt-support \
-          ca-certificates \
-          debsums \
-          dosfstools \
-          fai-server \
-          fai-setup-storage \
-          fdisk \
-          make \
-          python3 \
-          python3-httpx \
-          python3-libcloud \
-          python3-marshmallow \
-          python3-pytest \
-          python3-yaml \
-          qemu-user-static \
-          qemu-utils \
-          udev \
-          sudo
-
-    - name: Enable armhf emulation
-      run: |
-        # armhf is a foreign architecture here, so debootstrap and the FAI chroot rely
-        # on transparent qemu-user emulation.  Check the kernel state directly rather
-        # than update-binfmts' own database: on a runner where the handler is already
-        # registered (out-of-band, or by an earlier job) 'update-binfmts --display'
-        # fails even though emulation works fine.
-        mountpoint -q /proc/sys/fs/binfmt_misc || mount -t binfmt_misc none /proc/sys/fs/binfmt_misc
-        if [ ! -e /proc/sys/fs/binfmt_misc/qemu-arm ]; then
-          update-binfmts --enable qemu-arm
-        fi
-        cat /proc/sys/fs/binfmt_misc/qemu-arm
-        grep -qx enabled /proc/sys/fs/binfmt_misc/qemu-arm
-        # The F (fix-binary) flag opens the interpreter at registration time, which is
-        # what makes it reachable from inside the FAI chroot.
-        grep -qE '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-arm
-
     - name: Build image
       run: |
-        make BUILD_TYPE=official image_${{ matrix.release }}_generic_armhf
-        qemu-img convert -p -c -f raw -O qcow2 \
-          image_${{ matrix.release }}_generic_armhf.raw \
-          debian-${{ matrix.version }}-generic-armhf.qcow2
+        ./build-armhf-debian-image.sh "${{ matrix.release }}"
+        mv "image_${{ matrix.release }}_generic_armhf.qcow2" \
+          "debian-${{ matrix.version }}-generic-armhf.qcow2"
         chown $(id -u):$(id -g) debian-${{ matrix.version }}-generic-armhf.qcow2
 
     - uses: actions/upload-artifact@v4
