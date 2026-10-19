@@ -39,18 +39,25 @@ if [ ! -e /proc/sys/fs/binfmt_misc/qemu-arm ]; then
   # On trixie qemu-user ships systemd binfmt.d fragments instead of
   # update-binfmts definitions, and the systemd-binfmt helper may be missing
   # from a minimal container, so 'update-binfmts --enable qemu-arm' fails with
-  # "not in database of installed binary formats".  Try each registration
-  # method in turn, falling back to writing the kernel register interface
-  # directly with the static interpreter.
-  if [ -e /usr/share/binfmts/qemu-arm ] && update-binfmts --enable qemu-arm; then
-    true
-  elif [ -x /lib/systemd/systemd-binfmt ] && /lib/systemd/systemd-binfmt; then
-    true
-  elif [ -x /usr/lib/systemd/systemd-binfmt ] && /usr/lib/systemd/systemd-binfmt; then
-    true
-  elif command -v systemd-binfmt >/dev/null 2>&1 && systemd-binfmt; then
-    true
-  else
+  # "not in database of installed binary formats".  Also, a zero exit status
+  # does not mean qemu-arm got registered: on arm64 the qemu-user-binfmt
+  # package ships no qemu-arm.conf (each architecture's package excludes its
+  # own family), so systemd-binfmt succeeds while the entry stays missing.
+  # Each step below therefore re-checks the kernel state and only the last
+  # resort writes the kernel register interface directly.
+  if [ -e /usr/share/binfmts/qemu-arm ]; then
+    update-binfmts --enable qemu-arm || true
+  fi
+  if [ ! -e /proc/sys/fs/binfmt_misc/qemu-arm ]; then
+    if [ -x /lib/systemd/systemd-binfmt ]; then
+      /lib/systemd/systemd-binfmt || true
+    elif [ -x /usr/lib/systemd/systemd-binfmt ]; then
+      /usr/lib/systemd/systemd-binfmt || true
+    elif command -v systemd-binfmt >/dev/null 2>&1; then
+      systemd-binfmt || true
+    fi
+  fi
+  if [ ! -e /proc/sys/fs/binfmt_misc/qemu-arm ]; then
     # C opens the interpreter on behalf of the chroot credentials, F
     # (fix-binary) opens it at registration time so it stays reachable
     # inside the FAI chroot.
