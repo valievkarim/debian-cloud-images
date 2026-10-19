@@ -94,7 +94,10 @@ jobs:
       with:
         tag: latest
         commit: ${{ github.sha }}
-        name: daily build ${{ steps.date.outputs.date }}
+        # Manual dispatch only, so this is never a daily build.  omitBody keeps
+        # the release description free of commit messages.
+        name: manual build ${{ steps.date.outputs.date }}
+        omitBody: true
         artifacts: artifacts/*.qcow2
         allowUpdates: true
         removeArtifacts: true
